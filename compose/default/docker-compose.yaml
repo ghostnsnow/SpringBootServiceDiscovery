@@ -1,0 +1,107 @@
+services:
+  configserver:
+    image: "cp22590/configserver:v1"
+    container_name: "configserver-ms"
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8888/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - android22
+  eurekaserver:
+    image: "cp22590/eurekaserver:v1"
+    container_name: "eurekaserver-ms"
+    ports:
+      - "8071:8071"
+    healthcheck:
+      test: "curl --fail --silent http://localhost:8071/actuator/health/readiness | grep UP || exit 1"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - android22
+    environment:
+      SPRING_APPLICATION_NAME: "eurekaserver"
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8888/"
+    depends_on:
+      configserver:
+        condition: service_healthy
+  service-a:
+    image: "cp22590/service-a:v1"
+    container_name: "service-a-ms"
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - android22
+    environment:
+      SPRING_APPLICATION_NAME: "service-a"
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8888/"
+      SPRING_PROFILES_ACTIVE: "local"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eurekaserver:8071/eureka/"
+    depends_on:
+      configserver:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+  service-a-2:
+    image: "cp22590/service-a:v1"
+    container_name: "service-a-2-ms"
+    ports:
+      - "8180:8180"
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - android22
+    environment:
+      SPRING_APPLICATION_NAME: "service-a"
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8888/"
+      SPRING_PROFILES_ACTIVE: "prod"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eurekaserver:8071/eureka/"
+    depends_on:
+      configserver:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+  service-b:
+    image: "cp22590/service-b:v1"
+    container_name: "service-b-ms"
+    ports:
+      - "8280:8280"
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - android22
+    environment:
+      SPRING_APPLICATION_NAME: "service-b"
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8888/"
+      SPRING_PROFILES_ACTIVE: "default"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eurekaserver:8071/eureka/"
+    depends_on:
+      configserver:
+        condition: service_healthy
+      eurekaserver:
+        condition: service_healthy
+networks:
+  android22:
+    driver: "bridge"

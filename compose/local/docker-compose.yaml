@@ -1,0 +1,47 @@
+services:
+  configserver:
+    image: "cp22590/configserver:v1"
+    container_name: "configserver-ms"
+    ports:
+      - "8888:8888"
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - android22
+  service-a:
+    image: "cp22590/service-a:v1"
+    container_name: "service-a-ms"
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - android22
+    environment:
+      SPRING_APPLICATION_NAME: "service-a"
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8888/"
+      SPRING_PROFILES_ACTIVE: "local"
+    depends_on: configserver
+  service-b:
+    image: "cp22590/service-b:v1"
+    container_name: "service-b-ms"
+    ports:
+      - "8280:8280"
+    deploy:
+      resources:
+        limits:
+          memory: 700m
+    networks:
+      - android22
+    environment:
+      SPRING_APPLICATION_NAME: "service-b"
+      SPRING_CONFIG_IMPORT: "configserver:http://configserver:8888/"
+      SPRING_PROFILES_ACTIVE: "local"
+    depends_on: configserver
+networks:
+  android22:
+    driver: "bridge"

@@ -1,0 +1,39 @@
+server:
+  port: 8071
+
+spring:
+  application:
+    name: eureka-server
+  config:
+    import: "optional:configserver:http://localhost:8888/"
+  profiles:
+    active: prod
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    registerWithEureka: false
+    fetchRegistry: false
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+
+logging:
+  level:
+    org.springframework.cloud.config: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - "*"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
